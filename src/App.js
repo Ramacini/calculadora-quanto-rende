@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Calculator, TrendingUp, Mail, Phone, User, DollarSign } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { Calculator, TrendingUp, DollarSign } from 'lucide-react';
 
 const CalculadoraQuantoRende = () => {
   const [valorInicial, setValorInicial] = useState(10000);
@@ -8,7 +8,6 @@ const CalculadoraQuantoRende = () => {
   const [periodo, setPeriodo] = useState(5);
   const [investimentoMensal, setInvestimentoMensal] = useState(500);
   const [resultados, setResultados] = useState(null);
-  const [dadosGrafico, setDadosGrafico] = useState([]);
   const [pessoasHoje, setPessoasHoje] = useState(0);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [leadCapturado, setLeadCapturado] = useState(false);
@@ -37,30 +36,16 @@ const CalculadoraQuantoRende = () => {
     
     let saldo = valorInicial;
     let saldoPoupanca = valorInicial;
-    const evolucao = [];
     
-    for (let mes = 0; mes <= meses; mes++) {
-      if (mes > 0) {
-        saldo = saldo * (1 + taxaMensal) + investimentoMensal;
-        saldoPoupanca = saldoPoupanca * (1 + taxaPoupanca) + investimentoMensal;
-      }
-      
-      if (mes % 6 === 0) { // Adiciona ponto a cada 6 meses
-        evolucao.push({
-          mes: mes / 12,
-          valor: Math.round(saldo),
-          poupanca: Math.round(saldoPoupanca),
-          investido: valorInicial + (investimentoMensal * mes),
-          contaCorrente: valorInicial + (investimentoMensal * mes) // Sem rendimento
-        });
-      }
+    for (let mes = 0; mes < meses; mes++) {
+      saldo = saldo * (1 + taxaMensal) + investimentoMensal;
+      saldoPoupanca = saldoPoupanca * (1 + taxaPoupanca) + investimentoMensal;
     }
     
     const valorFinal = saldo;
     const valorFinalPoupanca = saldoPoupanca;
     const totalInvestido = valorInicial + (investimentoMensal * meses);
     const totalRendimentos = valorFinal - totalInvestido;
-    const totalRendimentosPoupanca = valorFinalPoupanca - totalInvestido;
     const percentualGanho = ((valorFinal - totalInvestido) / totalInvestido) * 100;
     const diferencaPoupanca = valorFinal - valorFinalPoupanca;
     const diferencaContaCorrente = valorFinal - totalInvestido;
@@ -70,13 +55,10 @@ const CalculadoraQuantoRende = () => {
       valorFinalPoupanca: Math.round(valorFinalPoupanca),
       totalInvestido: Math.round(totalInvestido),
       totalRendimentos: Math.round(totalRendimentos),
-      totalRendimentosPoupanca: Math.round(totalRendimentosPoupanca),
       percentualGanho: Math.round(percentualGanho * 100) / 100,
       diferencaPoupanca: Math.round(diferencaPoupanca),
       diferencaContaCorrente: Math.round(diferencaContaCorrente)
     });
-    
-    setDadosGrafico(evolucao);
   };
 
   useEffect(() => {
@@ -224,7 +206,7 @@ const CalculadoraQuantoRende = () => {
                   <p className="text-xs lg:text-sm text-blue-800 font-medium">✨ Sua simulação incluirá:</p>
                   <ul className="text-xs lg:text-sm text-blue-700 mt-2 space-y-1">
                     <li>• Valor final do seu investimento</li>
-                    <li>• Gráfico de evolução mês a mês</li>
+                    <li>• Gráfico visual da composição</li>
                     <li>• Comparativo com poupança e conta corrente</li>
                     <li>• Análise do crescimento percentual</li>
                   </ul>
@@ -299,59 +281,63 @@ const CalculadoraQuantoRende = () => {
                       </div>
                     </div>
 
-                    {/* Gráfico */}
+                    {/* Gráfico de Pizza */}
                     <div className="h-48 lg:h-64">
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={dadosGrafico}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis 
-                            dataKey="mes" 
-                            tick={{fontSize: 12}}
-                          />
-                          <YAxis 
-                            tickFormatter={(value) => `R$ ${(value/1000).toFixed(0)}k`}
-                            tick={{fontSize: 12}}
-                          />
+                        <PieChart>
+                          <Pie
+                            data={[
+                              {
+                                name: 'Seus Aportes',
+                                value: resultados.totalInvestido,
+                                color: '#3b82f6'
+                              },
+                              {
+                                name: 'Rendimentos',
+                                value: resultados.totalRendimentos,
+                                color: '#10b981'
+                              }
+                            ]}
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={80}
+                            dataKey="value"
+                            label={({name, percent}) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                          >
+                            <Cell fill="#3b82f6" />
+                            <Cell fill="#10b981" />
+                          </Pie>
                           <Tooltip 
-                            formatter={(value, name) => {
-                              const labels = {
-                                valor: 'Seu Investimento',
-                                poupanca: 'Na Poupança',
-                                contaCorrente: 'Conta Corrente',
-                                investido: 'Total Investido'
-                              };
-                              return [formatarMoeda(value), labels[name] || name];
-                            }}
+                            formatter={(value) => formatarMoeda(value)}
                             labelStyle={{fontSize: '12px'}}
                             contentStyle={{fontSize: '12px'}}
                           />
-                          <Line type="monotone" dataKey="valor" stroke="#2563eb" strokeWidth={3} name="valor" />
-                          <Line type="monotone" dataKey="poupanca" stroke="#f59e0b" strokeWidth={2} strokeDasharray="8 5" name="poupanca" />
-                          <Line type="monotone" dataKey="contaCorrente" stroke="#ef4444" strokeWidth={2} strokeDasharray="3 3" name="contaCorrente" />
-                          <Line type="monotone" dataKey="investido" stroke="#64748b" strokeWidth={1} strokeDasharray="5 5" name="investido" />
-                        </LineChart>
+                          <Legend 
+                            wrapperStyle={{fontSize: '12px'}}
+                          />
+                        </PieChart>
                       </ResponsiveContainer>
                     </div>
 
-                    {/* Legenda do Gráfico */}
+                    {/* Resumo do Gráfico */}
                     <div className="bg-white border border-gray-200 p-3 rounded-lg">
-                      <p className="text-xs font-medium text-gray-700 mb-2">Legenda do Gráfico:</p>
+                      <h4 className="text-xs font-medium text-gray-700 mb-2">Composição do seu Patrimônio Final:</h4>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                         <div className="flex items-center gap-2">
-                          <div className="w-4 h-0.5 bg-blue-600"></div>
-                          <span className="text-blue-700">Seu Investimento</span>
+                          <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                          <div>
+                            <span className="text-blue-700 font-medium">Seus Aportes: </span>
+                            <span className="font-bold">{formatarMoeda(resultados.totalInvestido)}</span>
+                            <div className="text-gray-500">({((resultados.totalInvestido / resultados.valorFinal) * 100).toFixed(1)}%)</div>
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <div className="w-4 h-0.5 bg-amber-500" style={{backgroundImage: 'repeating-linear-gradient(90deg, #f59e0b 0, #f59e0b 8px, transparent 8px, transparent 13px)'}}></div>
-                          <span className="text-amber-700">Na Poupança</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-0.5 bg-red-500" style={{backgroundImage: 'repeating-linear-gradient(90deg, #ef4444 0, #ef4444 3px, transparent 3px, transparent 6px)'}}></div>
-                          <span className="text-red-700">Conta Corrente</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-0.5 bg-gray-500" style={{backgroundImage: 'repeating-linear-gradient(90deg, #64748b 0, #64748b 5px, transparent 5px, transparent 10px)'}}></div>
-                          <span className="text-gray-700">Total Investido</span>
+                          <div className="w-4 h-4 bg-green-500 rounded"></div>
+                          <div>
+                            <span className="text-green-700 font-medium">Rendimentos: </span>
+                            <span className="font-bold">{formatarMoeda(resultados.totalRendimentos)}</span>
+                            <div className="text-gray-500">({((resultados.totalRendimentos / resultados.valorFinal) * 100).toFixed(1)}%)</div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -386,7 +372,7 @@ const CalculadoraQuantoRende = () => {
                 <p className="text-xs lg:text-sm text-blue-800 font-medium">✨ Sua simulação incluirá:</p>
                 <ul className="text-xs lg:text-sm text-blue-700 mt-2 space-y-1">
                   <li>• Valor final do seu investimento</li>
-                  <li>• Gráfico de evolução mês a mês</li>
+                  <li>• Gráfico visual da composição</li>
                   <li>• Comparativo com poupança e conta corrente</li>
                   <li>• Análise do crescimento percentual</li>
                 </ul>
