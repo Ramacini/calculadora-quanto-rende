@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Calculator, TrendingUp, DollarSign } from 'lucide-react';
+import { supabase } from './supabase';
 
 const CalculadoraQuantoRende = () => {
   const [valorInicial, setValorInicial] = useState(10000);
@@ -76,22 +77,51 @@ const CalculadoraQuantoRende = () => {
     setMostrarFormulario(true);
   };
 
-  const handleEnviarFormulario = () => {
-    if (!nome || !whatsapp || !email || !investimentoAtual || !aporteMensal || !aceitaTermos) {
-      alert('Por favor, preencha todos os campos e aceite os termos.');
+  const handleEnviarFormulario = async () => {
+  if (!nome || !whatsapp || !email || !investimentoAtual || !aporteMensal || !aceitaTermos) {
+    alert('Por favor, preencha todos os campos e aceite os termos.');
+    return;
+  }
+  
+  try {
+    // Salvar lead no Supabase
+    const { data, error } = await supabase
+      .from('leads')
+      .insert([
+        {
+          nome: nome,
+          whatsapp: whatsapp,
+          email: email,
+          investimento_atual: investimentoAtual,
+          aporte_mensal: aporteMensal,
+          valor_inicial: valorInicial,
+          taxa_juros: taxaJuros,
+          periodo: periodo,
+          investimento_mensal: investimentoMensal
+        }
+      ]);
+
+    if (error) {
+      console.error('Erro ao salvar lead:', error);
+      alert('Ops! Houve um erro. Tente novamente.');
       return;
     }
-    
-    // Capturar lead e liberar resultados
+
+    // Sucesso - liberar resultados
     setLeadCapturado(true);
     setMostrarFormulario(false);
     setEmailEnviado(true);
     
-    // Esconder mensagem de email enviado após 3 segundos
+    // Esconder mensagem após 3 segundos
     setTimeout(() => {
       setEmailEnviado(false);
     }, 3000);
-  };
+
+  } catch (error) {
+    console.error('Erro inesperado:', error);
+    alert('Ops! Houve um erro inesperado. Tente novamente.');
+  }
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-6 lg:py-8 px-3 lg:px-4">
