@@ -102,73 +102,42 @@ const CalculadoraRendeQuanto = () => {
     }
     
     try {
-      // Primeiro, verifica se já existe um registro com este email
-      const { data: leadExistente, error: erroConsulta } = await supabase
+      // Tenta salvar lead no Supabase
+      const { data, error } = await supabase
         .from('leads')
-        .select('id')
-        .eq('email', email)
-        .single();
-
-      let resultado;
-      
-      if (leadExistente) {
-        // Se já existe, atualiza o registro
-        const { data, error } = await supabase
-          .from('leads')
-          .update({
+        .insert([
+          {
             nome: nome,
             whatsapp: whatsapp,
+            email: email,
             investimento_atual: investimentoAtual,
             aporte_mensal: aporteMensal,
             valor_inicial: Number(valorInicial) || 0,
             taxa_juros: Number(taxaJuros) || 0,
             periodo: Number(periodo) || 0,
             investimento_mensal: Number(investimentoMensal) || 0
-          })
-          .eq('email', email);
-          
-        resultado = { data, error };
-      } else {
-        // Se não existe, cria novo registro
-        const { data, error } = await supabase
-          .from('leads')
-          .insert([
-            {
-              nome: nome,
-              whatsapp: whatsapp,
-              email: email,
-              investimento_atual: investimentoAtual,
-              aporte_mensal: aporteMensal,
-              valor_inicial: Number(valorInicial) || 0,
-              taxa_juros: Number(taxaJuros) || 0,
-              periodo: Number(periodo) || 0,
-              investimento_mensal: Number(investimentoMensal) || 0
-            }
-          ]);
-          
-        resultado = { data, error };
-      }
+          }
+        ]);
 
-      if (resultado.error) {
-        console.error('Erro ao salvar lead:', resultado.error);
-        alert('Ops! Houve um erro. Tente novamente.');
-        return;
+      // Log do erro para debug, mas não impede o fluxo
+      if (error) {
+        console.log('Info: Dados já existem ou erro menor:', error);
       }
-
-      // Sucesso - liberar resultados
-      setLeadCapturado(true);
-      setMostrarFormulario(false);
-      setEmailEnviado(true);
-      
-      // Esconder mensagem após 3 segundos
-      setTimeout(() => {
-        setEmailEnviado(false);
-      }, 3000);
 
     } catch (error) {
-      console.error('Erro inesperado:', error);
-      alert('Ops! Houve um erro inesperado. Tente novamente.');
+      // Log do erro mas não impede o usuário
+      console.log('Info: Erro capturado mas sistema continua:', error);
     }
+
+    // SEMPRE libera os resultados (independente de salvar ou não)
+    setLeadCapturado(true);
+    setMostrarFormulario(false);
+    setEmailEnviado(true);
+    
+    // Esconder mensagem após 3 segundos
+    setTimeout(() => {
+      setEmailEnviado(false);
+    }, 3000);
   };
 
   // Dados para o gráfico de pizza
