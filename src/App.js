@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { Calculator, TrendingUp, DollarSign } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { Calculator, TrendingUp, Mail, Phone, User, DollarSign } from 'lucide-react';
 import { supabase } from './supabase';
 
-const CalculadoraQuantoRende = () => {
+const CalculadoraRendeQuanto = () => {
   const [valorInicial, setValorInicial] = useState(10000);
   const [taxaJuros, setTaxaJuros] = useState(12);
   const [periodo, setPeriodo] = useState(5);
@@ -47,6 +47,7 @@ const CalculadoraQuantoRende = () => {
     const valorFinalPoupanca = saldoPoupanca;
     const totalInvestido = valorInicial + (investimentoMensal * meses);
     const totalRendimentos = valorFinal - totalInvestido;
+    const totalRendimentosPoupanca = valorFinalPoupanca - totalInvestido;
     const percentualGanho = ((valorFinal - totalInvestido) / totalInvestido) * 100;
     const diferencaPoupanca = valorFinal - valorFinalPoupanca;
     const diferencaContaCorrente = valorFinal - totalInvestido;
@@ -56,6 +57,7 @@ const CalculadoraQuantoRende = () => {
       valorFinalPoupanca: Math.round(valorFinalPoupanca),
       totalInvestido: Math.round(totalInvestido),
       totalRendimentos: Math.round(totalRendimentos),
+      totalRendimentosPoupanca: Math.round(totalRendimentosPoupanca),
       percentualGanho: Math.round(percentualGanho * 100) / 100,
       diferencaPoupanca: Math.round(diferencaPoupanca),
       diferencaContaCorrente: Math.round(diferencaContaCorrente)
@@ -78,50 +80,64 @@ const CalculadoraQuantoRende = () => {
   };
 
   const handleEnviarFormulario = async () => {
-  if (!nome || !whatsapp || !email || !investimentoAtual || !aporteMensal || !aceitaTermos) {
-    alert('Por favor, preencha todos os campos e aceite os termos.');
-    return;
-  }
-  
-  try {
-    // Salvar lead no Supabase
-    const { data, error } = await supabase
-      .from('leads')
-      .insert([
-        {
-          nome: nome,
-          whatsapp: whatsapp,
-          email: email,
-          investimento_atual: investimentoAtual,
-          aporte_mensal: aporteMensal,
-          valor_inicial: valorInicial,
-          taxa_juros: taxaJuros,
-          periodo: periodo,
-          investimento_mensal: investimentoMensal
-        }
-      ]);
-
-    if (error) {
-      console.error('Erro ao salvar lead:', error);
-      alert('Ops! Houve um erro. Tente novamente.');
+    if (!nome || !whatsapp || !email || !investimentoAtual || !aporteMensal || !aceitaTermos) {
+      alert('Por favor, preencha todos os campos e aceite os termos.');
       return;
     }
-
-    // Sucesso - liberar resultados
-    setLeadCapturado(true);
-    setMostrarFormulario(false);
-    setEmailEnviado(true);
     
-    // Esconder mensagem após 3 segundos
-    setTimeout(() => {
-      setEmailEnviado(false);
-    }, 3000);
+    try {
+      // Salvar lead no Supabase
+      const { data, error } = await supabase
+        .from('leads')
+        .insert([
+          {
+            nome: nome,
+            whatsapp: whatsapp,
+            email: email,
+            investimento_atual: investimentoAtual,
+            aporte_mensal: aporteMensal,
+            valor_inicial: valorInicial,
+            taxa_juros: taxaJuros,
+            periodo: periodo,
+            investimento_mensal: investimentoMensal
+          }
+        ]);
 
-  } catch (error) {
-    console.error('Erro inesperado:', error);
-    alert('Ops! Houve um erro inesperado. Tente novamente.');
-  }
-};
+      if (error) {
+        console.error('Erro ao salvar lead:', error);
+        alert('Ops! Houve um erro. Tente novamente.');
+        return;
+      }
+
+      // Sucesso - liberar resultados
+      setLeadCapturado(true);
+      setMostrarFormulario(false);
+      setEmailEnviado(true);
+      
+      // Esconder mensagem após 3 segundos
+      setTimeout(() => {
+        setEmailEnviado(false);
+      }, 3000);
+
+    } catch (error) {
+      console.error('Erro inesperado:', error);
+      alert('Ops! Houve um erro inesperado. Tente novamente.');
+    }
+  };
+
+  // Dados para o gráfico de pizza
+  const dadosGrafico = resultados ? [
+    {
+      name: 'Seus Aportes',
+      value: resultados.totalInvestido,
+      color: '#3b82f6'
+    },
+    {
+      name: 'Rendimentos',
+      value: resultados.totalRendimentos,
+      color: '#10b981'
+    }
+  ] : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-6 lg:py-8 px-3 lg:px-4">
@@ -130,7 +146,7 @@ const CalculadoraQuantoRende = () => {
         <div className="text-center mb-6 lg:mb-8">
           <div className="flex items-center justify-center gap-2 lg:gap-3 mb-3 lg:mb-4">
             <Calculator className="text-blue-600" size={32} />
-            <h1 className="text-3xl lg:text-4xl font-bold text-gray-800">Quanto Rende</h1>
+            <h1 className="text-3xl lg:text-4xl font-bold text-gray-800">Rende Quanto?</h1>
           </div>
           <p className="text-base lg:text-lg text-gray-600 mb-3 lg:mb-4 px-2">Descubra o poder dos juros compostos nos seus investimentos</p>
           
@@ -236,7 +252,7 @@ const CalculadoraQuantoRende = () => {
                   <p className="text-xs lg:text-sm text-blue-800 font-medium">✨ Sua simulação incluirá:</p>
                   <ul className="text-xs lg:text-sm text-blue-700 mt-2 space-y-1">
                     <li>• Valor final do seu investimento</li>
-                    <li>• Gráfico visual da composição</li>
+                    <li>• Gráfico de composição do patrimônio</li>
                     <li>• Comparativo com poupança e conta corrente</li>
                     <li>• Análise do crescimento percentual</li>
                   </ul>
@@ -272,6 +288,46 @@ const CalculadoraQuantoRende = () => {
                         <p className="text-lg lg:text-2xl font-bold text-green-800">
                           {formatarMoeda(resultados.totalRendimentos)}
                         </p>
+                      </div>
+                    </div>
+
+                    {/* Gráfico de Pizza */}
+                    <div className="bg-gray-50 p-3 lg:p-4 rounded-lg">
+                      <h4 className="font-semibold text-gray-800 mb-3 text-sm lg:text-base text-center">Composição do Seu Patrimônio</h4>
+                      <div className="h-48 lg:h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={dadosGrafico}
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={80}
+                              dataKey="value"
+                              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                              labelLine={false}
+                            >
+                              {dadosGrafico.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip 
+                              formatter={(value) => formatarMoeda(value)}
+                              contentStyle={{fontSize: '12px'}}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      
+                      {/* Legenda do Gráfico */}
+                      <div className="flex justify-center gap-4 mt-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                          <span className="text-xs lg:text-sm text-gray-700">Seus Aportes</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 bg-green-500 rounded"></div>
+                          <span className="text-xs lg:text-sm text-gray-700">Rendimentos</span>
+                        </div>
                       </div>
                     </div>
 
@@ -311,67 +367,6 @@ const CalculadoraQuantoRende = () => {
                       </div>
                     </div>
 
-                    {/* Gráfico de Pizza */}
-                    <div className="h-48 lg:h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={[
-                              {
-                                name: 'Seus Aportes',
-                                value: resultados.totalInvestido,
-                                color: '#3b82f6'
-                              },
-                              {
-                                name: 'Rendimentos',
-                                value: resultados.totalRendimentos,
-                                color: '#10b981'
-                              }
-                            ]}
-                            cx="50%"
-                            cy="50%"
-                            outerRadius={80}
-                            dataKey="value"
-                            label={({name, percent}) => `${name}: ${(percent * 100).toFixed(1)}%`}
-                          >
-                            <Cell fill="#3b82f6" />
-                            <Cell fill="#10b981" />
-                          </Pie>
-                          <Tooltip 
-                            formatter={(value) => formatarMoeda(value)}
-                            labelStyle={{fontSize: '12px'}}
-                            contentStyle={{fontSize: '12px'}}
-                          />
-                          <Legend 
-                            wrapperStyle={{fontSize: '12px'}}
-                          />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-
-                    {/* Resumo do Gráfico */}
-                    <div className="bg-white border border-gray-200 p-3 rounded-lg">
-                      <h4 className="text-xs font-medium text-gray-700 mb-2">Composição do seu Patrimônio Final:</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                          <div>
-                            <span className="text-blue-700 font-medium">Seus Aportes: </span>
-                            <span className="font-bold">{formatarMoeda(resultados.totalInvestido)}</span>
-                            <div className="text-gray-500">({((resultados.totalInvestido / resultados.valorFinal) * 100).toFixed(1)}%)</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 bg-green-500 rounded"></div>
-                          <div>
-                            <span className="text-green-700 font-medium">Rendimentos: </span>
-                            <span className="font-bold">{formatarMoeda(resultados.totalRendimentos)}</span>
-                            <div className="text-gray-500">({((resultados.totalRendimentos / resultados.valorFinal) * 100).toFixed(1)}%)</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
                     <div className="bg-green-50 border border-green-200 p-3 lg:p-4 rounded-lg">
                       <p className="text-green-800 font-medium text-sm lg:text-base">✅ Simulação gerada com sucesso, {nome}!</p>
                       <p className="text-green-700 text-xs lg:text-sm mt-1">Experimente alterar os valores ao lado para testar diferentes cenários.</p>
@@ -402,7 +397,7 @@ const CalculadoraQuantoRende = () => {
                 <p className="text-xs lg:text-sm text-blue-800 font-medium">✨ Sua simulação incluirá:</p>
                 <ul className="text-xs lg:text-sm text-blue-700 mt-2 space-y-1">
                   <li>• Valor final do seu investimento</li>
-                  <li>• Gráfico visual da composição</li>
+                  <li>• Gráfico de composição do patrimônio</li>
                   <li>• Comparativo com poupança e conta corrente</li>
                   <li>• Análise do crescimento percentual</li>
                 </ul>
@@ -562,10 +557,10 @@ const CalculadoraQuantoRende = () => {
           {/* Footer com branding */}
           <div className="mt-6 lg:mt-8 pt-4 lg:pt-6 border-t border-gray-200 text-center">
             <p className="text-blue-600 font-semibold text-sm lg:text-base mb-1">
-              www.quantorende.com.br
+              rendequanto.com
             </p>
             <p className="text-gray-500 text-xs lg:text-sm">
-              Calculadora gratuita de rendimentos de investimentos
+              Calculadora gratuita de rendimentos de investimentos - Rende Quanto?
             </p>
           </div>
         </div>
@@ -574,4 +569,4 @@ const CalculadoraQuantoRende = () => {
   );
 };
 
-export default CalculadoraQuantoRende;
+export default CalculadoraRendeQuanto;
