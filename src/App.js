@@ -4,10 +4,10 @@ import { Calculator, TrendingUp, Mail, Phone, User, DollarSign } from 'lucide-re
 import { supabase } from './supabase';
 
 const CalculadoraRendeQuanto = () => {
-  const [valorInicial, setValorInicial] = useState(10000);
-  const [taxaJuros, setTaxaJuros] = useState(12);
-  const [periodo, setPeriodo] = useState(5);
-  const [investimentoMensal, setInvestimentoMensal] = useState(500);
+  const [valorInicial, setValorInicial] = useState("10000");
+  const [taxaJuros, setTaxaJuros] = useState("12");
+  const [periodo, setPeriodo] = useState("5");
+  const [investimentoMensal, setInvestimentoMensal] = useState("500");
   const [resultados, setResultados] = useState(null);
   const [pessoasHoje, setPessoasHoje] = useState(0);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
@@ -31,24 +31,36 @@ const CalculadoraRendeQuanto = () => {
 
   // Função para calcular juros compostos
   const calcularJurosCompostos = () => {
-    const taxaMensal = taxaJuros / 100 / 12;
-    const taxaPoupanca = 0.5 / 100; // 0.5% ao mês (aproximadamente 6.17% ao ano)
-    const meses = periodo * 12;
+    // Converter strings para números, usando valores padrão se vazio
+    const valorInicialNum = Number(valorInicial) || 0;
+    const taxaJurosNum = Number(taxaJuros) || 0;
+    const periodoNum = Number(periodo) || 0;
+    const investimentoMensalNum = Number(investimentoMensal) || 0;
     
-    let saldo = valorInicial;
-    let saldoPoupanca = valorInicial;
+    // Se algum campo essencial estiver vazio, não calcular
+    if (!valorInicialNum && !investimentoMensalNum) {
+      setResultados(null);
+      return;
+    }
+    
+    const taxaMensal = taxaJurosNum / 100 / 12;
+    const taxaPoupanca = 0.5 / 100; // 0.5% ao mês (aproximadamente 6.17% ao ano)
+    const meses = periodoNum * 12;
+    
+    let saldo = valorInicialNum;
+    let saldoPoupanca = valorInicialNum;
     
     for (let mes = 0; mes < meses; mes++) {
-      saldo = saldo * (1 + taxaMensal) + investimentoMensal;
-      saldoPoupanca = saldoPoupanca * (1 + taxaPoupanca) + investimentoMensal;
+      saldo = saldo * (1 + taxaMensal) + investimentoMensalNum;
+      saldoPoupanca = saldoPoupanca * (1 + taxaPoupanca) + investimentoMensalNum;
     }
     
     const valorFinal = saldo;
     const valorFinalPoupanca = saldoPoupanca;
-    const totalInvestido = valorInicial + (investimentoMensal * meses);
+    const totalInvestido = valorInicialNum + (investimentoMensalNum * meses);
     const totalRendimentos = valorFinal - totalInvestido;
     const totalRendimentosPoupanca = valorFinalPoupanca - totalInvestido;
-    const percentualGanho = ((valorFinal - totalInvestido) / totalInvestido) * 100;
+    const percentualGanho = totalInvestido > 0 ? ((valorFinal - totalInvestido) / totalInvestido) * 100 : 0;
     const diferencaPoupanca = valorFinal - valorFinalPoupanca;
     const diferencaContaCorrente = valorFinal - totalInvestido;
     
@@ -100,10 +112,10 @@ const CalculadoraRendeQuanto = () => {
             email: email,
             investimento_atual: investimentoAtual,
             aporte_mensal: aporteMensal,
-            valor_inicial: valorInicial,
-            taxa_juros: taxaJuros,
-            periodo: periodo,
-            investimento_mensal: investimentoMensal
+            valor_inicial: Number(valorInicial) || 0,
+            taxa_juros: Number(taxaJuros) || 0,
+            periodo: Number(periodo) || 0,
+            investimento_mensal: Number(investimentoMensal) || 0
           }
         ]);
 
@@ -182,7 +194,7 @@ const CalculadoraRendeQuanto = () => {
                 <input
                   type="number"
                   value={valorInicial}
-                  onChange={(e) => setValorInicial(Number(e.target.value))}
+                  onChange={(e) => setValorInicial(e.target.value)}
                   className="w-full px-3 py-3 lg:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
                   placeholder="10.000"
                 />
@@ -195,7 +207,7 @@ const CalculadoraRendeQuanto = () => {
                 <input
                   type="number"
                   value={taxaJuros}
-                  onChange={(e) => setTaxaJuros(Number(e.target.value))}
+                  onChange={(e) => setTaxaJuros(e.target.value)}
                   step="0.1"
                   className="w-full px-3 py-3 lg:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
                   placeholder="12"
@@ -209,7 +221,7 @@ const CalculadoraRendeQuanto = () => {
                 <input
                   type="number"
                   value={periodo}
-                  onChange={(e) => setPeriodo(Number(e.target.value))}
+                  onChange={(e) => setPeriodo(e.target.value)}
                   className="w-full px-3 py-3 lg:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
                   placeholder="5"
                 />
@@ -222,7 +234,7 @@ const CalculadoraRendeQuanto = () => {
                 <input
                   type="number"
                   value={investimentoMensal}
-                  onChange={(e) => setInvestimentoMensal(Number(e.target.value))}
+                  onChange={(e) => setInvestimentoMensal(e.target.value)}
                   className="w-full px-3 py-3 lg:px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
                   placeholder="500"
                 />
