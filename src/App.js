@@ -102,25 +102,55 @@ const CalculadoraRendeQuanto = () => {
     }
     
     try {
-      // Salvar lead no Supabase
-      const { data, error } = await supabase
+      // Primeiro, verifica se já existe um registro com este email
+      const { data: leadExistente, error: erroConsulta } = await supabase
         .from('leads')
-        .insert([
-          {
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      let resultado;
+      
+      if (leadExistente) {
+        // Se já existe, atualiza o registro
+        const { data, error } = await supabase
+          .from('leads')
+          .update({
             nome: nome,
             whatsapp: whatsapp,
-            email: email,
             investimento_atual: investimentoAtual,
             aporte_mensal: aporteMensal,
             valor_inicial: Number(valorInicial) || 0,
             taxa_juros: Number(taxaJuros) || 0,
             periodo: Number(periodo) || 0,
             investimento_mensal: Number(investimentoMensal) || 0
-          }
-        ]);
+          })
+          .eq('email', email);
+          
+        resultado = { data, error };
+      } else {
+        // Se não existe, cria novo registro
+        const { data, error } = await supabase
+          .from('leads')
+          .insert([
+            {
+              nome: nome,
+              whatsapp: whatsapp,
+              email: email,
+              investimento_atual: investimentoAtual,
+              aporte_mensal: aporteMensal,
+              valor_inicial: Number(valorInicial) || 0,
+              taxa_juros: Number(taxaJuros) || 0,
+              periodo: Number(periodo) || 0,
+              investimento_mensal: Number(investimentoMensal) || 0
+            }
+          ]);
+          
+        resultado = { data, error };
+      }
 
-      if (error) {
-        console.error('Erro ao salvar lead:', error);
+      if (resultado.error) {
+        console.error('Erro ao salvar lead:', resultado.error);
         alert('Ops! Houve um erro. Tente novamente.');
         return;
       }
