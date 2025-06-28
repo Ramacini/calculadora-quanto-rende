@@ -76,6 +76,10 @@ const CalculadoraRendeQuanto = () => {
   };
 
   const handleVerResultados = () => {
+    // Se já capturou o lead, não mostra formulário novamente
+    if (leadCapturado) {
+      return; // Já pode ver os resultados diretamente
+    }
     setMostrarFormulario(true);
   };
 
@@ -226,10 +230,15 @@ const CalculadoraRendeQuanto = () => {
 
               <button
                 onClick={handleVerResultados}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 lg:py-4 px-6 rounded-lg font-semibold text-base lg:text-lg hover:from-blue-700 hover:to-indigo-700 transition duration-300 flex items-center justify-center gap-2"
+                className={`w-full py-3 lg:py-4 px-6 rounded-lg font-semibold text-base lg:text-lg transition duration-300 flex items-center justify-center gap-2 ${
+                  leadCapturado 
+                    ? "bg-green-100 text-green-700 cursor-default border-2 border-green-300" 
+                    : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700"
+                }`}
+                disabled={leadCapturado}
               >
                 <Calculator size={20} />
-                Calcular Rendimento
+                {leadCapturado ? "✅ Simulação Ativa - Altere os valores acima!" : "Calcular Rendimento"}
               </button>
             </div>
           </div>
@@ -268,10 +277,15 @@ const CalculadoraRendeQuanto = () => {
             ) : (
               // Resultados liberados após formulário
               <div>
-                <h2 className="text-xl lg:text-2xl font-bold text-gray-800 mb-4 lg:mb-6 flex items-center gap-2">
+                <h2 className="text-xl lg:text-2xl font-bold text-gray-800 mb-2 lg:mb-4 flex items-center gap-2">
                   <TrendingUp className="text-green-600" size={24} />
                   Seus Resultados, {nome}!
                 </h2>
+                <div className="bg-blue-50 border border-blue-200 p-2 lg:p-3 rounded-lg mb-4">
+                  <p className="text-blue-800 text-xs lg:text-sm font-medium text-center">
+                    💡 Altere os valores ao lado e veja os resultados mudarem em tempo real!
+                  </p>
+                </div>
                 
                 {resultados && (
                   <div className="space-y-4 lg:space-y-6">
@@ -369,7 +383,7 @@ const CalculadoraRendeQuanto = () => {
 
                     <div className="bg-green-50 border border-green-200 p-3 lg:p-4 rounded-lg">
                       <p className="text-green-800 font-medium text-sm lg:text-base">✅ Simulação gerada com sucesso, {nome}!</p>
-                      <p className="text-green-700 text-xs lg:text-sm mt-1">Experimente alterar os valores ao lado para testar diferentes cenários.</p>
+                      <p className="text-green-700 text-xs lg:text-sm mt-1">🔄 Altere os valores da calculadora ao lado para testar novos cenários instantaneamente!</p>
                     </div>
                   </div>
                 )}
